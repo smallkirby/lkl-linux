@@ -38,7 +38,9 @@ OBJCOPY_REMOVE_SECTION:=
 endif
 
 LKL_ENTRY_POINTS := lkl_start_kernel lkl_sys_halt lkl_syscall lkl_trigger_irq \
-	lkl_get_free_irq lkl_put_irq lkl_is_running
+	lkl_get_free_irq lkl_put_irq lkl_is_running lkl__sync_synchronize \
+	lkl__sync_fetch_and_sub lkl__sync_fetch_and_or lkl__sync_fetch_and_and \
+	lkl__sync_fetch_and_add
 
 core-y += arch/lkl/kernel/
 core-y += arch/lkl/mm/

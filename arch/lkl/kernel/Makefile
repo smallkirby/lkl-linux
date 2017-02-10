@@ -1,7 +1,7 @@
 extra-y := vmlinux.lds
 
 obj-y = setup.o threads.o irq.o time.o syscalls.o misc.o console.o \
-	syscalls_32.o cpu.o
+	syscalls_32.o cpu.o atomic.o
 
 ifeq ($(OUTPUT_FORMAT),mach-o-x86-64)
 extra-y += mach-o-linker.o vmlinux-mach-o.lds vmlinux-mach-o.o
