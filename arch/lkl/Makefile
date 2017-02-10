@@ -21,6 +21,11 @@ else
 $(error Unrecognized platform: $(OUTPUT_FORMAT))
 endif
 
+ifeq ($(OUTPUT_FORMAT),elf32-littlearm)
+CFLAGS_ABI      :=-mabi=aapcs-linux -mno-thumb-interwork -mfpu=vfp
+KBUILD_CFLAGS += $(CFLAGS_ABI)
+endif
+
 ifeq ($(shell uname -s), Linux)
 NPROC=$(shell nproc)
 else # e.g., FreeBSD
