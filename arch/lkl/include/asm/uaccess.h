@@ -20,7 +20,7 @@ static inline __must_check long raw_copy_from_user(void *to,
 	ti = current_thread_info();
 
 	if (unlikely(from == NULL && n))
-		return -EFAULT;
+		return n;
 
 	if (!ti->rump.remote) /* local case */
 		memcpy(to, from, n);
@@ -41,7 +41,7 @@ static inline __must_check long raw_copy_to_user(void __user *to,
 	ti = current_thread_info();
 
 	if (unlikely(to == NULL && n))
-		return -EFAULT;
+		return n;
 
 	if (!ti->rump.remote) /* local case */
 		memcpy(to, from, n);
