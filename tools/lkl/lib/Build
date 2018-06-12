@@ -34,3 +34,5 @@ CFLAGS_rump-host.o = -I$(RUMP_PREFIX)/../platform/include \
 		   -I$(RUMP_PREFIX)/../franken/ucontext \
 		   -I../../ \
 		   -DLKL_HOST_CONFIG_POSIX -DCONFIG_LKL
+
+CFLAGS_rump-sysproxy.o += -I$(OUTPUT)/../../include
