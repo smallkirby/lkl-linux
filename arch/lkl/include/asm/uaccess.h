@@ -1,64 +1,58 @@
 #ifndef _ASM_LKL_UACCESS_H
 #define _ASM_LKL_UACCESS_H
 
-/* copied from old include/asm-generic/uaccess.h */
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <linux/irqflags.h>
+#include <linux/string.h>
+#include <asm/errno.h>
+#include <asm/thread_info.h>
+
+#define __access_ok(addr, size) (1)
+
+/* handle rump remote client */
 static inline __must_check long raw_copy_from_user(void *to,
 		const void __user *from, unsigned long n)
 {
-	if (__builtin_constant_p(n)) {
-		switch (n) {
-		case 1:
-			*(u8 *)to = *(u8 __force *)from;
-			return 0;
-		case 2:
-			*(u16 *)to = *(u16 __force *)from;
-			return 0;
-		case 4:
-			*(u32 *)to = *(u32 __force *)from;
-			return 0;
-#ifdef CONFIG_64BIT
-		case 8:
-			*(u64 *)to = *(u64 __force *)from;
-			return 0;
-#endif
-		default:
-			break;
-		}
-	}
+	int error = 0;
+	struct thread_info *ti;
 
-	memcpy(to, (const void __force *)from, n);
-	return 0;
+	ti = current_thread_info();
+
+	if (unlikely(from == NULL && n))
+		return -EFAULT;
+
+	if (!ti->rump.remote) /* local case */
+		memcpy(to, from, n);
+	else /* remote case */
+		error = lkl_ops->sp_copyin(ti->rump.client, ti->task->pid,
+					   from, to, n);
+
+	return error;
 }
+#define __copy_from_user(to, from, n) __copy_from_user(to, from, n)
 
 static inline __must_check long raw_copy_to_user(void __user *to,
 		const void *from, unsigned long n)
 {
-	if (__builtin_constant_p(n)) {
-		switch (n) {
-		case 1:
-			*(u8 __force *)to = *(u8 *)from;
-			return 0;
-		case 2:
-			*(u16 __force *)to = *(u16 *)from;
-			return 0;
-		case 4:
-			*(u32 __force *)to = *(u32 *)from;
-			return 0;
-#ifdef CONFIG_64BIT
-		case 8:
-			*(u64 __force *)to = *(u64 *)from;
-			return 0;
-#endif
-		default:
-			break;
-		}
-	}
+	int error = 0;
+	struct thread_info *ti;
 
-	memcpy((void __force *)to, from, n);
-	return 0;
+	ti = current_thread_info();
+
+	if (unlikely(to == NULL && n))
+		return -EFAULT;
+
+	if (!ti->rump.remote) /* local case */
+		memcpy(to, from, n);
+	else /* remote case */
+		error = lkl_ops->sp_copyout(ti->rump.client, ti->task->pid,
+					    from, to, n);
+
+	return error;
 }
-
+#define __copy_to_user(to, from, n) __copy_to_user(to, from, n)
 
 #include <asm-generic/uaccess.h>
 
-#endif
+#endif /* _ASM_LKL_UACCESS_H */

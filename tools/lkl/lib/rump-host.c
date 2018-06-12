@@ -174,6 +174,8 @@ static void rump_tls_free(struct lkl_tls_key *key)
 	rumpuser_free(key, sizeof(struct lkl_tls_key));
 }
 
+struct lkl_tls_key *tls_key;
+
 static int rump_tls_set(struct lkl_tls_key *key, void *data)
 {
 	struct lkl_tls_key *new = rumpuser_getcookie();
@@ -192,11 +194,8 @@ static void *rump_tls_get(struct lkl_tls_key *key)
 {
 	struct lkl_tls_key *new = rumpuser_getcookie();
 
-	if (store != key)
-		return NULL;
-	return store ? store->data : NULL;
+	return new ? new->data : NULL;
 }
-
 
 /* memory */
 static void *rump_mem_alloc(size_t size)
@@ -240,8 +239,10 @@ static void rump_thread_exit(void)
 {
 	struct lkl_tls_key *key = rumpuser_getcookie();
 
-	if (key)
+	if (key) {
 		key->destructor(key->data);
+		rumpuser_free(key, sizeof(struct lkl_tls_key));
+	}
 
 	rumpuser_thread_exit();
 }
@@ -571,6 +572,8 @@ struct lkl_host_operations lkl_host_ops = {
 #ifndef RUMPRUN
 	.virtio_devices = lkl_virtio_devs,
 #endif
+	.sp_copyin = rump_sp_copyin,
+	.sp_copyout = rump_sp_copyout,
 };
 
 /* stub calls */
@@ -678,6 +681,7 @@ int rump___sysimpl_reboot(int opt, char *bootstr)
 {
 
 	lkl_umount_all();
+	rumpuser_sp_fini(NULL);
 	lkl_sys_halt();
 	rump_exit();
 
@@ -958,12 +962,6 @@ int rump_init(void)
 
 	lkl_start_kernel(&lkl_host_ops, boot_cmdline);
 
-	/* FIXME: rumprun doesn't have sysproxy.
-	 * maybe outsourced and linked -lsysproxy for hijack case ?
-	 */
-#ifdef ENABLE_SYSPROXY
-	rump_sysproxy_init();
-#endif
 	if (rumpuser_getparam("RUMP_VERBOSE", buf, sizeof(buf)) == 0) {
 		if (*buf != 0)
 			verbose = 1;
@@ -982,8 +980,5 @@ void rump_exit(void)
 	if (stack)
 		rump_mem_free(stack);
 
-#ifdef ENABLE_SYSPROXY
-	rump_sysproxy_fini();
-#endif
 	rumpuser_exit(0);
 }
