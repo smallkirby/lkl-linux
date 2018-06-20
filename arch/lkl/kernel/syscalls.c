@@ -47,6 +47,10 @@ static long run_syscall(long no, long *params)
 	task_work_run();
 	do_signal(NULL);
 
+	/* XXX: maybe need lkl_ops->thread_yield() ? */
+	void __sched_schedule(void);
+	__sched_schedule();
+
 	return ret;
 }
 
