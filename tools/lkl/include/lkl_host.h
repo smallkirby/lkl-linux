@@ -76,6 +76,11 @@ struct lkl_dev_blk_ops {
 	int (*request)(struct lkl_disk disk, struct lkl_blk_req *req);
 };
 
+extern struct lkl_dev_9pfs_ops lkl_dev_9pfs_ops;
+struct lkl_dev_9pfs_ops {
+	int (*request)(struct lkl_9pfs fs, struct iovec *iov, int cnt);
+};
+
 struct lkl_netdev {
 	struct lkl_dev_net_ops *ops;
 	int id;

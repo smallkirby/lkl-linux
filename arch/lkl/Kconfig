@@ -89,6 +89,13 @@ config PCI
 	select GENERIC_PCI_IOMAP
 	default y
 
+config NET_9P
+       tristate "Plan 9 Resource Sharing Support (9P2000)"
+       select NET_9P_VIRTIO
+       select 9P_FS
+       default y
+
+
 source init/Kconfig
 
 source net/Kconfig

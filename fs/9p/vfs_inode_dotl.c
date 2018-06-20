@@ -59,12 +59,18 @@ v9fs_vfs_mknod_dotl(struct inode *dir, struct dentry *dentry, umode_t omode,
 
 static kgid_t v9fs_get_fsgid_for_create(struct inode *dir_inode)
 {
+	struct v9fs_session_info *v9ses;
+
 	BUG_ON(dir_inode == NULL);
 
 	if (dir_inode->i_mode & S_ISGID) {
 		/* set_gid bit is set.*/
 		return dir_inode->i_gid;
 	}
+
+	v9ses = v9fs_inode2v9ses(dir_inode);
+	if (v9ses && !gid_eq(v9ses->dfltgid, V9FS_DEFGID))
+		return v9ses->dfltgid;
 	return current_fsgid();
 }
 
