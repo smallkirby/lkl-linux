@@ -157,7 +157,7 @@ lkl_test_cmd()
             SU=""
         fi
         WRAPPER="adb shell $SU"
-    elif [ -n "$LKL_HOST_CONFIG_BSD" ]; then
+    elif [ -n "$LKL_HOST_CONFIG_BSD" -a -z "$LKL_HOST_CONFIG_MACHO" ]; then
         WRAPPER="$MYSSH $SU"
     fi
 
@@ -232,7 +232,7 @@ if [ -n "$LKL_HOST_CONFIG_ANDROID" ]; then
     adb shell mkdir -p $ANDROID_WDIR
 fi
 
-if [ -n "$LKL_HOST_CONFIG_BSD" ]; then
+if [ -n "$LKL_HOST_CONFIG_BSD" -a -z "$LKL_HOST_CONFIG_MACHO" ]; then
     trap lkl_test_bsd_cleanup EXIT
     export BSD_WDIR=/root/lkl
     $MYSSH mkdir -p $BSD_WDIR

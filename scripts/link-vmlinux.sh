@@ -113,8 +113,18 @@ vmlinux_link()
 				${1}"
 		fi
 
-		${LD} ${LDFLAGS} ${LDFLAGS_vmlinux} -o ${2}		\
-			-T ${lds} ${objects}
+		if [ "${LD_FMT}" != "mach-o-x86-64" ]; then
+			${LD} ${LDFLAGS} ${LDFLAGS_vmlinux} -o ${2}	\
+			      -T ${lds} ${objects}
+		else
+			objects="${KBUILD_VMLINUX_INIT}	\
+					${KBUILD_VMLINUX_MAIN}		\
+					${KBUILD_VMLINUX_LIBS}		\
+					${1}"
+			${LD} ${LDFLAGS} ${LDFLAGS_vmlinux} -o ${2}	\
+			      ${objects}
+		fi
+
 	else
 		if [ -n "${CONFIG_THIN_ARCHIVES}" ]; then
 			objects="-Wl,--whole-archive			\
@@ -133,10 +143,17 @@ vmlinux_link()
 				${1}"
 		fi
 
-		${CC} ${CFLAGS_vmlinux} -o ${2}				\
-			-Wl,-T,${lds}					\
-			${objects}					\
-			-lutil -lrt -lpthread
+		if [ "${LD_FMT}" != "mach-o-x86-64" ]; then
+			${CC} ${CFLAGS_vmlinux} -o ${2}		\
+				-Wl,-T,${lds}				\
+				${objects}				\
+				-lutil -lrt -lpthread
+		else
+			${CC} ${CFLAGS_vmlinux} -o ${2}		\
+				${objects}				\
+				-lutil -lrt -lpthread
+		fi
+
 		rm -f linux
 	fi
 }

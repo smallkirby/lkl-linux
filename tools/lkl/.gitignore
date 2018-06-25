@@ -6,6 +6,7 @@ lklfuse
 tests/valgrind*.xml
 *.exe
 *.dll
+*.dylib
 tests/net-test
 tests/disk
 Makefile.conf

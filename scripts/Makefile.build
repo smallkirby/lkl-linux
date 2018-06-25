@@ -469,10 +469,17 @@ else
 endif
 
 # If the list of objects to link is empty, just create an empty built-in.o
+ifneq ($(OUTPUT_FORMAT),mach-o-x86-64)
 cmd_link_o_target = $(if $(strip $(obj-y)),\
 		      $(cmd_make_builtin) $@ $(filter $(obj-y), $^) \
 		      $(cmd_secanalysis),\
 		      $(cmd_make_empty_builtin) $@)
+else
+cmd_link_o_target = $(if $(strip $(obj-y)),\
+		      $(cmd_make_builtin) $@ $(filter $(obj-y), $^) \
+		      $(cmd_secanalysis),\
+		      $(cmd_make_empty_builtin) $@ empty.o)
+endif
 
 $(builtin-target): $(obj-y) FORCE
 	$(call if_changed,link_o_target)
@@ -502,7 +509,7 @@ quiet_cmd_link_l_target = AR      $@
 ifdef CONFIG_THIN_ARCHIVES
   cmd_link_l_target = rm -f $@; $(AR) rcsTP$(KBUILD_ARFLAGS) $@ $(lib-y)
 else
-  cmd_link_l_target = rm -f $@; $(AR) rcs$(KBUILD_ARFLAGS) $@ $(lib-y)
+  cmd_link_l_target = rm -f $@; $(AR) rc$(KBUILD_ARFLAGS) $@ $(lib-y)
 endif
 
 $(lib-target): $(lib-y) FORCE
@@ -523,7 +530,7 @@ cmd_export_list = $(OBJDUMP) -h $< | \
 	sed -ne '/___ksymtab/s/.*+\([^ ]*\).*/$(ref_prefix)\1)/p' >$(ksyms-lds);\
 	rm -f $(dummy-object);\
 	echo | $(CC) $(a_flags) -c -o $(dummy-object) -x assembler -;\
-	$(LD) $(ld_flags) -r -o $@ -T $(ksyms-lds) $(dummy-object);\
+	$(LD) $(ld_flags) -r -o $@ $(dummy-object);\
 	rm $(dummy-object) $(ksyms-lds)
 
 $(obj)/lib-ksyms.o: $(lib-target) FORCE

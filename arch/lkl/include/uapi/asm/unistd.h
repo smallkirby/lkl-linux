@@ -1,3 +1,5 @@
+#include <linux/types.h>
+
 #define __ARCH_WANT_SYSCALL_NO_AT
 #define __ARCH_WANT_SYSCALL_DEPRECATED
 #define __ARCH_WANT_SYSCALL_NO_FLAGS

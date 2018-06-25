@@ -58,6 +58,9 @@ setup_backend()
     "loopback")
         ;;
     "pipe")
+        if [ -n "$LKL_HOST_CONFIG_MACHO" ]; then
+            return $TEST_SKIP
+        fi
         if [ -z $(lkl_test_cmd which mkfifo) ]; then
             echo "no mkfifo command"
             return $TEST_SKIP
@@ -71,6 +74,9 @@ setup_backend()
         export_vars work_dir fifo1 fifo2
         ;;
     "tap")
+        if [ -n "$LKL_HOST_CONFIG_MACHO" ]; then
+            return $TEST_SKIP
+        fi
         tap_prepare
         if ! lkl_test_cmd test -c /dev/net/tun; then
             if [ -z "$LKL_HOST_CONFIG_BSD" ]; then

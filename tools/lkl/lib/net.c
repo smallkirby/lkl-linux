@@ -4,6 +4,8 @@
 #include <lkl_host.h>
 
 static inline void set_sockaddr(struct lkl_sockaddr_in *sin, unsigned int addr,
+				unsigned short port) __attribute__((unused));
+static inline void set_sockaddr(struct lkl_sockaddr_in *sin, unsigned int addr,
 				unsigned short port)
 {
 	sin->sin_family = LKL_AF_INET;
