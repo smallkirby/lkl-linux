@@ -941,13 +941,22 @@ struct lkl_netdev *lkl_netdev_rumpfd_create(const char *ifname, int fd)
 }
 
 /* ifparams takes a fd number */
-struct lkl_netdev *lkl_netdev_rumpfd_lookup(const char *ifparams)
+struct lkl_netdev *lkl_netdev_rumpfd_lookup(const char *ifparams, int offload)
 {
+	char buf[8];
 	int fd = atoi(ifparams), i;
 
 	for (i = 0; i < 16 /* MAX_NET_DEVS */; i++) {
-		if (rumpfds[i] && rumpfds[i]->fd == fd)
+		if (rumpfds[i] && rumpfds[i]->fd == fd) {
+			if (offload) {
+				if (rumpuser_getparam("LKL_OFFLOAD",
+					buf, sizeof(buf)) != 0)
+					lkl_printf("WARN: LKL_OFFLOAD should be configured\n");
+				rumpfds[i]->dev.has_vnet_hdr = 1;
+			}
+
 			return (struct lkl_netdev *)rumpfds[i];
+		}
 	}
 
 	return NULL;
