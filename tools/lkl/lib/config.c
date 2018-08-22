@@ -492,6 +492,8 @@ static int lkl_config_netdev_create(struct lkl_config *cfg,
 						    mac);
 		} else if ((strcmp(iface->iftype, "pipe") == 0)) {
 			nd = lkl_netdev_pipe_create(iface->ifparams, offload);
+		} else if (strcmp(iface->iftype, "rumpfd") == 0) {
+			nd = lkl_netdev_rumpfd_lookup(iface->ifparams, offload);
 		} else {
 			if (offload) {
 				lkl_printf("WARN: %s isn't supported on %s\n",
@@ -506,8 +508,6 @@ static int lkl_config_netdev_create(struct lkl_config *cfg,
 			nd = lkl_netdev_vde_create(iface->ifparams);
 		if (strcmp(iface->iftype, "raw") == 0)
 			nd = lkl_netdev_raw_create(iface->ifparams);
-		if (strcmp(iface->iftype, "rumpfd") == 0)
-			nd = lkl_netdev_rumpfd_lookup(iface->ifparams);
 	}
 
 	if (nd) {
