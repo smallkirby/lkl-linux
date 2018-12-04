@@ -12,3 +12,9 @@
 #include <asm-generic/unistd.h>
 
 #define __NR_virtio_mmio_device_add		(__NR_arch_specific_syscall + 0)
+
+/* XXX: busybox uses syscall(2) with x86_64 syscall number so,
+ * temporary use this */
+#undef __NR_clock_gettime
+#define __NR_clock_gettime			228
+__SC_COMP(__NR_clock_gettime, sys_clock_gettime, compat_sys_clock_gettime)
