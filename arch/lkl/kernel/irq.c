@@ -9,6 +9,7 @@
 #include <asm/irqflags.h>
 #include <asm/host_ops.h>
 #include <asm/cpu.h>
+#include <asm/signal.h>
 
 /*
  * To avoid much overhead we use an indirect approach: the irqs are marked using
@@ -66,6 +67,10 @@ static void run_irq(int irq)
 	irq_exit();
 	set_irq_regs(old_regs);
 	local_irq_restore(flags);
+
+	lkl_cpu_put();
+	do_signal(NULL);
+	lkl_cpu_get();
 }
 
 /**
