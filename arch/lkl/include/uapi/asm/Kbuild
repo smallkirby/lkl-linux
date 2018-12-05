@@ -24,7 +24,6 @@ generic-y += shmparam.h
 generic-y += signal.h
 generic-y += socket.h
 generic-y += sockios.h
-generic-y += stat.h
 generic-y += statfs.h
 generic-y += termbits.h
 generic-y += termios.h
