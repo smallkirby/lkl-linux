@@ -67,10 +67,6 @@ static void run_irq(int irq)
 	irq_exit();
 	set_irq_regs(old_regs);
 	local_irq_restore(flags);
-
-	lkl_cpu_put();
-	do_signal(NULL);
-	lkl_cpu_get();
 }
 
 /**
@@ -103,6 +99,11 @@ int lkl_trigger_irq(int irq)
 	run_irq(irq);
 
 	lkl_cpu_put();
+
+	/* XXX: signal is only delivered when triggered IRQ is completed 
+	 * doing this (do_signal()) in run_irq() is expensive thus here.
+	 */
+	do_signal(NULL);
 
 	return 0;
 }
