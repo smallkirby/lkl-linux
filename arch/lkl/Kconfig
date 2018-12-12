@@ -43,6 +43,7 @@ config LKL
        select ARCH_NO_COHERENT_DMA_MMAP
        select HAVE_UNDERSCORE_SYMBOL_PREFIX if OUTPUT_FORMAT = "mach-o-x86-64"
        select FUTEX
+       select FILE_LOCKING
 
 config OUTPUTFORMAT
        string
