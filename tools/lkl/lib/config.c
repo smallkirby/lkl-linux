@@ -91,6 +91,8 @@ static int parse_ifarr(struct lkl_config *cfg,
 			}
 			if (jsoneq(jstr, &toks[pos], "type") == 0) {
 				cfgptr = &iface->iftype;
+			} else if (jsoneq(jstr, &toks[pos], "name") == 0) {
+				cfgptr = &iface->ifname;
 			} else if (jsoneq(jstr, &toks[pos], "param") == 0) {
 				cfgptr = &iface->ifparams;
 			} else if (jsoneq(jstr, &toks[pos], "mtu") == 0) {
@@ -216,6 +218,7 @@ void lkl_show_config(struct lkl_config *cfg)
 	lkl_printf("delay: %s\n", cfg->delay_main);
 
 	for (iface = cfg->ifaces; iface; iface = iface->next, i++) {
+		lkl_printf("ifname[%d] = %s\n", i, iface->ifname);
 		lkl_printf("ifmac[%d] = %s\n", i, iface->ifmac_str);
 		lkl_printf("ifmtu[%d] = %s\n", i, iface->ifmtu_str);
 		lkl_printf("iftype[%d] = %s\n", i, iface->iftype);
@@ -475,6 +478,15 @@ static int lkl_config_netdev_create(struct lkl_config *cfg,
 		nd = lkl_netdev_tap_create(iface->iftap, offload);
 	}
 
+	/* FD for Network I/O inherit from rexec is identified by "ifname"
+	 * and environ. __RUMP_FDINFO_NET_{ifname}=FD
+	 */
+	if (!nd && iface->iftype && iface->ifname) {
+		if (strcmp(iface->iftype, "rumpfd") == 0) {
+			nd = lkl_netdev_rumpfd_lookup(iface->ifname, offload);
+		}
+	}
+
 	if (!nd && iface->iftype && iface->ifparams) {
 		if ((strcmp(iface->iftype, "tap") == 0)) {
 			nd = lkl_netdev_tap_create(iface->ifparams, offload);
@@ -486,8 +498,6 @@ static int lkl_config_netdev_create(struct lkl_config *cfg,
 						    mac);
 		} else if ((strcmp(iface->iftype, "pipe") == 0)) {
 			nd = lkl_netdev_pipe_create(iface->ifparams, offload);
-		} else if (strcmp(iface->iftype, "rumpfd") == 0) {
-			nd = lkl_netdev_rumpfd_lookup(iface->ifparams, offload);
 		} else {
 			if (offload) {
 				lkl_printf("WARN: %s isn't supported on %s\n",

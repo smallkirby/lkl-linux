@@ -9,6 +9,7 @@ struct lkl_config_iface {
 
 	/* OBSOLETE: should use IFTYPE and IFPARAMS */
 	char *iftap;
+	char *ifname;
 	char *iftype;
 	char *ifparams;
 	char *ifmtu_str;

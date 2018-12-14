@@ -941,10 +941,20 @@ struct lkl_netdev *lkl_netdev_rumpfd_create(const char *ifname, int fd)
 }
 
 /* ifparams takes a fd number */
-struct lkl_netdev *lkl_netdev_rumpfd_lookup(const char *ifparams, int offload)
+struct lkl_netdev *lkl_netdev_rumpfd_lookup(const char *ifname, int offload)
 {
 	char buf[8];
-	int fd = atoi(ifparams), i;
+	char env[32], *fdstr;
+
+	snprintf(env, sizeof(env), "%s%s", "__RUMP_FDINFO_NET_", ifname);
+	fdstr = getenv(env);
+	if (!fdstr) {
+		lkl_printf("FDINFO: %s%s is not founed in environ",
+			   "__RUMP_FDINFO_NET_", ifname);
+		return NULL;
+	}
+
+	int fd = atoi(fdstr), i;
 
 	for (i = 0; i < 16 /* MAX_NET_DEVS */; i++) {
 		if (rumpfds[i] && rumpfds[i]->fd == fd) {
