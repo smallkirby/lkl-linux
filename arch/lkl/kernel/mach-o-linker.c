@@ -23,7 +23,6 @@ void *sys_fadvise64_64;
 void *sys_fanotify_init;
 void *sys_fanotify_mark;
 void *sys_finit_module;
-void *sys_flock;
 void *sys_get_mempolicy;
 void *sys_init_module;
 void *sys_inotify_add_watch;
