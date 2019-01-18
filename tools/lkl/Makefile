@@ -3,6 +3,9 @@
 # also do not print "Entering directory..." messages from make
 .SUFFIXES:
 MAKEFLAGS += -r --no-print-directory
+RUMP_PREFIX?=
+RUMP_INCLUDE?=$(RUMP_PREFIX)/
+export RUMP_INCLUDE
 
 KCONFIG?=defconfig
 
@@ -12,6 +15,8 @@ ifneq ($(silent),1)
 	Q = @
   endif
 endif
+
+-include ../scripts/Makefile.include
 
 PREFIX   := /usr
 
@@ -43,7 +48,8 @@ $(OUTPUT)Makefile.conf: Makefile.autoconf
 
 export CFLAGS += -I$(OUTPUT)/include -Iinclude -Wall -g -O2 -Wextra \
 	 -Wno-unused-parameter \
-	 -Wno-missing-field-initializers -fno-strict-aliasing
+	 -Wno-missing-field-initializers -fno-strict-aliasing \
+	 -D_FORTIFY_SOURCE=0 -fno-stack-protector
 
 -include Targets
 

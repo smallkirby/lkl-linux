@@ -9,17 +9,28 @@ liblkl-y += jmp_buf.o
 liblkl-$(LKL_HOST_CONFIG_POSIX) += posix-host.o
 liblkl-$(LKL_HOST_CONFIG_NT) += nt-host.o
 liblkl-y += utils.o
-liblkl-y += virtio_blk.o
+liblkl-$(LKL_HOST_CONFIG_VIRTIO_BLK) += virtio_blk.o
 liblkl-y += virtio.o
-liblkl-y += dbg.o
-liblkl-y += dbg_handler.o
+liblkl-$(LKL_HOST_CONFIG_POSIX) += dbg.o
+liblkl-$(LKL_HOST_CONFIG_POSIX) += dbg_handler.o
 liblkl-$(LKL_HOST_CONFIG_VIRTIO_NET) += virtio_net.o
-liblkl-$(LKL_HOST_CONFIG_VIRTIO_NET) += virtio_net_fd.o
-liblkl-$(LKL_HOST_CONFIG_VIRTIO_NET) += virtio_net_tap.o
-liblkl-$(LKL_HOST_CONFIG_VIRTIO_NET) += virtio_net_raw.o
+liblkl-$(LKL_HOST_CONFIG_POSIX) += virtio_net_fd.o
+liblkl-$(LKL_HOST_CONFIG_POSIX) += virtio_net_tap.o
+liblkl-$(LKL_HOST_CONFIG_POSIX) += virtio_net_raw.o
 liblkl-$(LKL_HOST_CONFIG_VIRTIO_NET_MACVTAP) += virtio_net_macvtap.o
 liblkl-$(LKL_HOST_CONFIG_VIRTIO_NET_DPDK) += virtio_net_dpdk.o
 liblkl-$(LKL_HOST_CONFIG_VIRTIO_NET_VDE) += virtio_net_vde.o
-liblkl-$(LKL_HOST_CONFIG_VIRTIO_NET) += virtio_net_pipe.o
-liblkl-y += ../../perf/pmu-events/jsmn.o
+liblkl-$(LKL_HOST_CONFIG_POSIX) += virtio_net_pipe.o
+liblkl-$(LKL_HOST_CONFIG_RUMP) += rump.o
+liblkl-$(LKL_HOST_CONFIG_RUMP) += rump-host.o
+liblkl-$(LKL_HOST_CONFIG_RUMP) += rump-sysproxy.o
+liblkl-$(LKL_HOST_CONFIG_JSON_CONF) += ../../perf/pmu-events/jsmn.o
 liblkl-y += config.o
+
+# for frankenlibc
+CFLAGS_rump-host.o = -I$(RUMP_PREFIX)/../platform/include \
+		   -I$(RUMP_PREFIX)/../franken/include \
+		   -I$(RUMP_PREFIX)/../franken/thread \
+		   -I$(RUMP_PREFIX)/../franken/ucontext \
+		   -I../../ \
+		   -DLKL_HOST_CONFIG_POSIX -DCONFIG_LKL

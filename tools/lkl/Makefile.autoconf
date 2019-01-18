@@ -9,7 +9,8 @@ define set_autoconf_var
 endef
 
 define find_include
-  $(eval include_paths=$(shell $(CC) -E -Wp,-v -xc /dev/null 2>&1 | grep '^ '))
+  $(eval include_paths=$(shell $(CC) -I$(RUMP_INCLUDE) -E -Wp,-v -xc \
+	 /dev/null 2>&1 | grep '^ '))
   $(foreach f, $(include_paths), $(wildcard $(f)/$(1)))
 endef
 
@@ -66,6 +67,9 @@ endef
 define posix_host
   $(call set_autoconf_var,POSIX,y)
   $(call set_autoconf_var,VIRTIO_NET,y)
+  $(call set_autoconf_var,VIRTIO_BLK,y)
+  $(call set_autoconf_var,JSON_CONF,y)
+  LDFLAGS += -pie
   CFLAGS += -fPIC -pthread
   SOSUF := .so
 
@@ -94,12 +98,39 @@ endef
 
 define nt_host
   $(call set_autoconf_var,NT,y)
+  $(call set_autoconf_var,VIRTIO_BLK,y)
+  $(call set_autoconf_var,JSON_CONF,y)
   KOPT = "KALLSYMS_EXTRA_PASS=1"
   LDLIBS += -lws2_32
   EXESUF := .exe
   SOSUF := .dll
   CFLAGS += -Iinclude/mingw32
   $(if $(filter $(1),pe-x86-64),$(call nt64_host))
+endef
+
+define rump_host
+  $(call set_autoconf_var,RUMP,y)
+  LDFLAGS += -pie
+  CFLAGS += -fPIC
+  CFLAGS += -I$(RUMP_INCLUDE) -DRUMPUSER -DLIBRUMPUSER -D_KERNEL
+  SOSUF := .so
+
+  $(if $(filter $(1),elf64-x86-64-freebsd),$(call bsd_host))
+  $(if $(filter $(1),mach-o-x86-64),$(call macos_host))
+  # if rumprun=yes, then skip virtio-host and json build
+  $(if $(filter $(rumprun),yes),
+    CFLAGS += -DRUMPRUN
+    $(call set_autoconf_var,JSON_CONF,n),
+  $(call set_autoconf_var,VIRTIO_NET,y)
+    $(call set_autoconf_var,VIRTIO_BLK,y)
+    $(call set_autoconf_var,JSON_CONF,y)
+    )
+
+  # if on arm-none-eabi baremetal, skip virio-host build
+  $(if $(filter $(CROSS_COMPILE),arm-none-eabi-),\
+       CFLAGS += -Iinclude/arm-none-eabi,\
+       CFLAGS += -pthread)
+
 endef
 
 define do_autoconf
@@ -113,8 +144,11 @@ define do_autoconf
   # XXX: treat as mach-o if LD_FMT is empty string
   $(eval LD_FMT = $(if $(LD_FMT),$(LD_FMT),mach-o-x86-64))
   export LD_FMT = $(LD_FMT)
+  $(if $(strip $(call find_include,rump/rumpuser.h)),\
+       $(call rump_host,$(LD_FMT)),
   $(if $(filter $(LD_FMT),$(POSIX_HOSTS)),$(call posix_host,$(LD_FMT)))
   $(if $(filter $(LD_FMT),$(NT_HOSTS)),$(call nt_host,$(LD_FMT)))
+  )
 endef
 
 export do_autoconf

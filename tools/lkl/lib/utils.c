@@ -3,6 +3,10 @@
 #include <string.h>
 #include <lkl_host.h>
 
+#ifdef RUMPUSER
+#include "rump.h"
+#endif
+
 static const char * const lkl_err_strings[] = {
 	"Success",
 	"Operation not permitted",
@@ -260,4 +264,17 @@ void lkl_sysctl_parse_write(const char *sysctls)
 			return;
 		}
 	}
+}
+
+void lkl_parse_env(void)
+{
+	char *sysctls = getenv("LKL_SYSCTL");
+	char *qdisc_entries = getenv("LKL_NET_QDISC");
+
+	/* XXX: ifindex should be configurable */
+	if (qdisc_entries)
+		lkl_qdisc_parse_add(2, qdisc_entries);
+
+	if (sysctls)
+		lkl_sysctl_parse_write(sysctls);
 }

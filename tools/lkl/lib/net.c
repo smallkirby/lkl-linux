@@ -1,7 +1,11 @@
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 #include "endian.h"
 #include <lkl_host.h>
+
+#ifdef RUMPUSER
+#include "rump.h"
+#endif
 
 #ifdef __MINGW32__
 #include <ws2tcpip.h>
