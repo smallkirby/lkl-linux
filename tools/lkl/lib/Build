@@ -10,6 +10,7 @@ liblkl-$(LKL_HOST_CONFIG_POSIX) += posix-host.o
 liblkl-$(LKL_HOST_CONFIG_NT) += nt-host.o
 liblkl-y += utils.o
 liblkl-$(LKL_HOST_CONFIG_VIRTIO_BLK) += virtio_blk.o
+liblkl-$(LKL_HOST_CONFIG_RUMP) += virtio_9pfs.o
 liblkl-y += virtio.o
 liblkl-$(LKL_HOST_CONFIG_POSIX) += dbg.o
 liblkl-$(LKL_HOST_CONFIG_POSIX) += dbg_handler.o

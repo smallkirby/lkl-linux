@@ -94,6 +94,12 @@ config HZ
         int
         default 100
 
+config NET_9P
+       tristate "Plan 9 Resource Sharing Support (9P2000)"
+       select NET_9P_VIRTIO
+       select 9P_FS
+       default y
+
 config CONSOLE_LOGLEVEL_QUIET
 	int "quiet console loglevel (1-15)"
 	range 1 15

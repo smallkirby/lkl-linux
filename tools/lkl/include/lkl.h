@@ -380,6 +380,13 @@ struct lkl_disk {
 	struct lkl_dev_blk_ops *ops;
 };
 
+struct lkl_9pfs {
+	void *dev;
+	int fd;
+	char *tag;
+	struct lkl_dev_9pfs_ops *ops;
+};
+
 /**
  * lkl_disk_add - add a new disk
  *

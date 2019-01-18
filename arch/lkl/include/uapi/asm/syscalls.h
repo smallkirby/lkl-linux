@@ -159,6 +159,7 @@ struct sockaddr {
 #include <linux/virtio_blk.h>
 #include <linux/virtio_net.h>
 #include <linux/virtio_ring.h>
+#include <linux/virtio_9p.h>
 #include <linux/pkt_sched.h>
 
 struct user_msghdr {

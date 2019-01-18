@@ -711,7 +711,7 @@ int rump___sysimpl_mount50(const char *fstype, const char *path, int perm,
 {
 	int ret;
 
-	ret = lkl_sys_mkdir(path, 0xff);
+	ret = lkl_sys_mkdir(path, 0700);
 	if (ret && ret != -LKL_EEXIST)
 		lkl_printf("mount_fs mkdir (rv=%d)\n", ret);
 
@@ -731,10 +731,9 @@ int rump___sysimpl_socket30(int i, int j, int k)
 	return 0;
 }
 
-int rump___sysimpl_unmount(const char *str, int i)
+int rump___sysimpl_unmount(const char *str, int flags)
 {
-	panic();
-	return 0;
+	return lkl_sys_umount((char *)str, flags);
 }
 
 void __assert13(const char *file, int line, const char *function,
@@ -809,6 +808,29 @@ static int blk_request(struct lkl_disk disk, struct lkl_blk_req *req)
 struct lkl_dev_blk_ops lkl_dev_blk_ops = {
 	.get_capacity = fd_get_capacity,
 	.request = blk_request,
+};
+
+static int fs_request(struct lkl_9pfs fs, struct iovec *iov, int cnt)
+{
+	int err = 0;
+
+	err = write(fs.fd, iov[0].iov_base, iov[0].iov_len);
+	if (err < 0) {
+		lkl_printf("rumpfd 9pfs: failed to write to fd %d\n", fs.fd);
+		return -1;
+	}
+
+	err = readv(fs.fd, &iov[1], cnt - 1);
+	if (err < 0) {
+		lkl_printf("rumpfd 9pfs: failed to read to fd %d\n", fs.fd);
+		return LKL_DEV_BLK_STATUS_IOERR;
+	}
+
+	return LKL_DEV_BLK_STATUS_OK;
+}
+
+struct lkl_dev_9pfs_ops lkl_dev_9pfs_ops = {
+	.request = fs_request,
 };
 
 struct lkl_netdev_rumpfd {
