@@ -21,7 +21,7 @@
 /* Let's see if the host has semaphore.h */
 #include <unistd.h>
 
-#ifdef _POSIX_SEMAPHORES
+#if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES + 0) > 0
 #include <semaphore.h>
 /* TODO(pscollins): We don't support fork() for now, but maybe one day
  * we will? */
@@ -40,7 +40,7 @@ struct lkl_mutex {
 };
 
 struct lkl_sem {
-#ifdef _POSIX_SEMAPHORES
+#if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES + 0) > 0
 	sem_t sem;
 #else
 	pthread_mutex_t lock;
@@ -78,7 +78,7 @@ static struct lkl_sem *sem_alloc(int count)
 	if (!sem)
 		return NULL;
 
-#ifdef _POSIX_SEMAPHORES
+#if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES + 0) > 0
 	if (sem_init(&sem->sem, SHARE_SEM, count) < 0) {
 		lkl_printf("sem_init: %s\n", strerror(errno));
 		free(sem);
@@ -95,7 +95,7 @@ static struct lkl_sem *sem_alloc(int count)
 
 static void sem_free(struct lkl_sem *sem)
 {
-#ifdef _POSIX_SEMAPHORES
+#if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES + 0) > 0
 	WARN_UNLESS(sem_destroy(&sem->sem));
 #else
 	WARN_PTHREAD(pthread_cond_destroy(&sem->cond));
@@ -106,7 +106,7 @@ static void sem_free(struct lkl_sem *sem)
 
 static void sem_up(struct lkl_sem *sem)
 {
-#ifdef _POSIX_SEMAPHORES
+#if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES + 0) > 0
 	WARN_UNLESS(sem_post(&sem->sem));
 #else
 	WARN_PTHREAD(pthread_mutex_lock(&sem->lock));
@@ -120,7 +120,7 @@ static void sem_up(struct lkl_sem *sem)
 
 static void sem_down(struct lkl_sem *sem)
 {
-#ifdef _POSIX_SEMAPHORES
+#if defined(_POSIX_SEMAPHORES) && (_POSIX_SEMAPHORES + 0) > 0
 	int err;
 
 	do {
@@ -258,6 +258,27 @@ static unsigned long long time_ns(void)
 	return 1e9*ts.tv_sec + ts.tv_nsec;
 }
 
+#ifdef __APPLE__
+static void *timer_alloc(void (*fn)(void *), void *arg)
+{
+	return fn;
+}
+
+static int timer_set_oneshot(void *_timer, unsigned long ns)
+{
+	struct itimerval val = {
+		.it_value.tv_usec = ns,
+	};
+
+	signal(SIGALRM, _timer);
+	return setitimer(ITIMER_REAL, &val, NULL);
+}
+
+static void timer_free(void *_timer)
+{
+}
+
+#else
 static void *timer_alloc(void (*fn)(void *), void *arg)
 {
 	int err;
@@ -296,6 +317,7 @@ static void timer_free(void *_timer)
 
 	timer_delete(timer);
 }
+#endif
 
 static void panic(void)
 {
@@ -304,7 +326,7 @@ static void panic(void)
 
 static long _gettid(void)
 {
-#ifdef	__FreeBSD__
+#if defined(__FreeBSD__) || defined (__APPLE__)
 	return (long)pthread_self();
 #else
 	return syscall(SYS_gettid);

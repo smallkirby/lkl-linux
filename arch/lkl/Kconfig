@@ -16,6 +16,7 @@ config LKL
        select DMA_DIRECT_OPS
        select PHYS_ADDR_T_64BIT if 64BIT
        select 64BIT if "$(OUTPUT_FORMAT)" = "elf64-x86-64"
+       select 64BIT if "$(OUTPUT_FORMAT)" = "mach-o-x86-64"
        select 64BIT if "$(OUTPUT_FORMAT)" = "pe-x86-64"
        select HAVE_UNDERSCORE_SYMBOL_PREFIX if "$(OUTPUT_FORMAT)" = "pe-i386"
        select 64BIT if "$(OUTPUT_FORMAT)" = "elf64-x86-64-freebsd"
@@ -40,6 +41,7 @@ config LKL
        select IP_ADVANCED_ROUTER
        select IPV6_ADVANCED_ROUTER
        select ARCH_NO_COHERENT_DMA_MMAP
+       select HAVE_UNDERSCORE_SYMBOL_PREFIX if "$(OUTPUT_FORMAT)" = "mach-o-x86-64"
 
 config OUTPUT_FORMAT
        string "Output format"

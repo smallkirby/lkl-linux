@@ -26,7 +26,7 @@ struct cl_arg {
 	cl_arg_parser_t parser;
 };
 
-int parse_args(int argc, const char **argv, struct cl_arg *args);
+int __parse_args(int argc, const char **argv, struct cl_arg *args);
 
 
 #endif /* _LKL_TEST_CLA_H */

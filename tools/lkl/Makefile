@@ -53,7 +53,9 @@ all: $(TARGETS)
 
 # this workaround is for FreeBSD
 bin/stat:
-ifeq ($(LKL_HOST_CONFIG_BSD),y)
+ifeq ($(LKL_HOST_CONFIG_MACHO),y)
+	$(Q)ln -sf `which gstat` bin/stat
+else ifeq ($(LKL_HOST_CONFIG_BSD),y)
 	$(Q)ln -sf `which gnustat` bin/stat
 	$(Q)ln -sf `which gsed` bin/sed
 else
@@ -62,6 +64,8 @@ endif
 
 # rule to build lkl.o
 $(OUTPUT)lib/lkl.o: bin/stat
+#	 apple ar doesn't allow empty object
+	$(Q)echo "" | gcc -x c - -c -o $(OUTPUT)/../../empty.o
 	$(Q)$(MAKE) -C ../.. ARCH=lkl $(KOPT) $(KCONFIG)
 # this workaround is for arm32 linker (ld.gold)
 	$(Q)export PATH=$(srctree)/tools/lkl/bin/:${PATH} ;\
@@ -69,7 +73,7 @@ $(OUTPUT)lib/lkl.o: bin/stat
 
 # rules to link libs
 $(OUTPUT)%$(SOSUF): LDFLAGS += -shared
-$(OUTPUT)%$(SOSUF): $(OUTPUT)%-in.o $(OUTPUT)liblkl.a
+$(OUTPUT)%$(SOSUF): $(OUTPUT)liblkl.a
 	$(QUIET_LINK)$(CC) $(LDFLAGS) $(LDFLAGS_$*-y) -o $@ $^ $(LDLIBS) $(LDLIBS_$*-y)
 
 # liblkl is special

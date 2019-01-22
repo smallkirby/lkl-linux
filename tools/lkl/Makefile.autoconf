@@ -1,10 +1,10 @@
-POSIX_HOSTS=elf64-x86-64 elf32-i386 elf64-x86-64-freebsd elf32-littlearm elf64-littleaarch64
+POSIX_HOSTS=elf64-x86-64 elf32-i386 elf64-x86-64-freebsd elf32-littlearm elf64-littleaarch64 mach-o-x86-64
 NT_HOSTS=pe-i386 pe-x86-64
 
 define set_autoconf_var
-  $(shell echo "#define LKL_HOST_CONFIG_$(1) $(2)" \
+  $(shell /bin/echo "#define LKL_HOST_CONFIG_$(1) $(2)" \
 	  >> $(OUTPUT)/include/lkl_autoconf.h)
-  $(shell echo "LKL_HOST_CONFIG_$(1)=$(2)" >> $(OUTPUT)/tests/autoconf.sh)
+  $(shell /bin/echo "LKL_HOST_CONFIG_$(1)=$(2)" >> $(OUTPUT)/tests/autoconf.sh)
   export LKL_HOST_CONFIG_$(1)=$(2)
 endef
 
@@ -23,6 +23,25 @@ endef
 
 define bsd_host
   $(call set_autoconf_var,BSD,y)
+endef
+
+define macos_host
+  # macOS is a BSD variant
+  $(call bsd_host)
+  $(call set_autoconf_var,MACHO,y)
+  SOSUF := .dylib
+  # XXX: clang
+  KBUILD_CLANG_CFLAGS := -Wno-initializer-overrides -Wno-format-security
+  KBUILD_CLANG_CFLAGS += -Wno-tautological-compare -Wno-format
+  KBUILD_CLANG_CFLAGS += -Wno-gnu-variable-sized-type-not-at-end
+  KBUILD_CLANG_CFLAGS += -Wno-uninitialized -Wno-sometimes-uninitialized
+  KBUILD_CLANG_CFLAGS += -Wno-address-of-packed-member -Wno-unused-value
+  export KBUILD_CLANG_CFLAGS
+
+  CFLAGS += $$(KBUILD_CLANG_CFLAGS)
+
+  HOST_EXTRACFLAGS += $$(KBUILD_CLANG_CFLAGS)
+  export HOST_EXTRACFLAGS
 endef
 
 define virtio_net_dpdk
@@ -47,11 +66,14 @@ endef
 define posix_host
   $(call set_autoconf_var,POSIX,y)
   $(call set_autoconf_var,VIRTIO_NET,y)
-  LDFLAGS += -pie
   CFLAGS += -fPIC -pthread
   SOSUF := .so
-  $(if $(call is_defined,__ANDROID__),$(call android_host),LDLIBS += -lrt -lpthread)
+
+  $(if $(call is_defined,__ANDROID__),$(call android_host),LDLIBS += -lpthread)
   $(if $(filter $(1),elf64-x86-64-freebsd),$(call bsd_host))
+  $(if $(filter $(1),mach-o-x86-64),$(call macos_host),LDFLAGS += -pie)
+  $(if $(filter $(1),elf64-x86-64),LDLIBS += -lrt)
+  $(if $(filter $(1),elf64-x86-64-freebsd),LDLIBS += -lrt)
   $(if $(filter yes,$(dpdk)),$(call virtio_net_dpdk))
   $(if $(filter yes,$(vde)),$(call virtio_net_vde))
   $(if $(strip $(call find_include,fuse.h)),$(call set_autoconf_var,FUSE,y))
@@ -87,7 +109,10 @@ define do_autoconf
   export AR := $(CROSS_COMPILE)ar
   $(eval LD := $(CROSS_COMPILE)ld)
   $(eval CC := $(CROSS_COMPILE)gcc)
-  $(eval LD_FMT := $(shell $(LD) -r -print-output-format))
+  $(eval LD_FMT := $(shell $(LD) -r -print-output-format 2> /dev/null))
+  # XXX: treat as mach-o if LD_FMT is empty string
+  $(eval LD_FMT = $(if $(LD_FMT),$(LD_FMT),mach-o-x86-64))
+  export LD_FMT = $(LD_FMT)
   $(if $(filter $(LD_FMT),$(POSIX_HOSTS)),$(call posix_host,$(LD_FMT)))
   $(if $(filter $(LD_FMT),$(NT_HOSTS)),$(call nt_host,$(LD_FMT)))
 endef
@@ -98,6 +123,6 @@ export do_autoconf
 $(OUTPUT)Makefile.conf: Makefile.autoconf
 	$(shell mkdir -p $(OUTPUT)/include)
 	$(shell mkdir -p $(OUTPUT)/tests)
-	$(shell echo -n "" > $(OUTPUT)/include/lkl_autoconf.h)
-	$(shell echo -n "" > $(OUTPUT)/tests/autoconf.sh)
-	@echo "$$do_autoconf" > $(OUTPUT)/Makefile.conf
+	$(shell /bin/echo -n "" > $(OUTPUT)/include/lkl_autoconf.h)
+	$(shell /bin/echo -n "" > $(OUTPUT)/tests/autoconf.sh)
+	@/bin/echo "$$do_autoconf" > $(OUTPUT)/Makefile.conf

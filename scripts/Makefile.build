@@ -440,9 +440,15 @@ ifdef builtin-target
 # makes them small and fast, but unable to be used by the linker.
 # scripts/link-vmlinux.sh builds an aggregate built-in.a with a symbol
 # table and index.
+ifneq ($(OUTPUT_FORMAT),mach-o-x86-64)
 quiet_cmd_ar_builtin = AR      $@
       cmd_ar_builtin = rm -f $@; \
                      $(AR) rcSTP$(KBUILD_ARFLAGS) $@ $(filter $(real-obj-y), $^)
+else
+quiet_cmd_ar_builtin = LD      $@
+      cmd_ar_builtin = rm -f $@; \
+                     $(LD) -r -o $@ $(filter $(real-obj-y), $^) empty.o
+endif
 
 $(builtin-target): $(real-obj-y) FORCE
 	$(call if_changed,ar_builtin)
@@ -470,7 +476,11 @@ ifdef lib-target
 quiet_cmd_link_l_target = AR      $@
 
 # lib target archives do get a symbol table and index
+ifneq ($(OUTPUT_FORMAT),mach-o-x86-64)
 cmd_link_l_target = rm -f $@; $(AR) rcsTP$(KBUILD_ARFLAGS) $@ $(lib-y)
+else
+cmd_link_l_target = rm -f $@; $(AR) rc$(KBUILD_ARFLAGS) $@ $(lib-y)
+endif
 
 $(lib-target): $(lib-y) FORCE
 	$(call if_changed,link_l_target)
@@ -490,7 +500,7 @@ cmd_export_list = $(OBJDUMP) -h $< | \
 	sed -ne '/___ksymtab/s/.*+\([^ ]*\).*/$(ref_prefix)\1)/p' >$(ksyms-lds);\
 	rm -f $(dummy-object);\
 	echo | $(CC) $(a_flags) -c -o $(dummy-object) -x assembler -;\
-	$(LD) $(ld_flags) -r -o $@ -T $(ksyms-lds) $(dummy-object);\
+	$(LD) $(ld_flags) -r -o $@ $(dummy-object);\
 	rm $(dummy-object) $(ksyms-lds)
 
 $(obj)/lib-ksyms.o: $(lib-target) FORCE

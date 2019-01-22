@@ -301,7 +301,7 @@ struct lkl_test tests[] = {
 
 int main(int argc, const char **argv)
 {
-	if (parse_args(argc, argv, args) < 0)
+	if (__parse_args(argc, argv, args) < 0)
 		return -1;
 
 	if (cla.ip != LKL_INADDR_NONE && (cla.nmlen < 0 || cla.nmlen > 32)) {

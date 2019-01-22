@@ -242,6 +242,26 @@ static inline long lkl_sys_pipe(int fd[2])
 }
 #endif
 
+#ifdef __lkl__NR_dup3
+/**
+ * lkl_sys_pipe - wrapper for lkl_sys_pipe2
+ */
+static inline long lkl_sys_dup2(int old, int new)
+{
+	int r;
+
+	if (old == new) {
+		r = lkl_sys_fcntl(old, LKL_F_GETFD, 0);
+		if (r >= 0)
+			return old;
+	} else {
+		while ((r = lkl_sys_dup3(old, new, 0)) == -LKL_EBUSY);
+	}
+
+	return r;
+}
+#endif
+
 #ifdef __lkl__NR_sendto
 /**
  * lkl_sys_send - wrapper for lkl_sys_sendto

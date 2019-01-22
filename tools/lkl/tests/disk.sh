@@ -12,7 +12,7 @@ function prepfs()
 
     dd if=/dev/zero of=$file bs=1024 count=102400
 
-    yes | mkfs.$1 $file
+    mkfs.$1 $file
 
     if ! [ -z $ANDROID_WDIR ]; then
         adb shell mkdir -p $ANDROID_WDIR

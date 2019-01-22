@@ -112,7 +112,7 @@ static void print_help(struct cl_arg *args)
 	}
 }
 
-int parse_args(int argc, const char **argv, struct cl_arg *args)
+int __parse_args(int argc, const char **argv, struct cl_arg *args)
 {
 	int i;
 

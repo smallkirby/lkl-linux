@@ -17,7 +17,7 @@
 #ifdef __linux__
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
-#elif __FreeBSD__
+#elif defined(__FreeBSD__) || defined(__APPLE__)
 #include <netinet/in.h>
 #endif
 #include <fcntl.h>
@@ -55,7 +55,7 @@ struct lkl_netdev *lkl_netdev_raw_create(const char *ifname)
 	}
 
 	fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-#elif __FreeBSD__
+#elif defined(__FreeBSD__) || defined(__APPLE__)
 	fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
 #endif
 	if (fd < 0) {

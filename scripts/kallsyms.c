@@ -363,10 +363,17 @@ static void write_src(void)
 	printf("#define ALGN .align 4\n");
 	printf("#endif\n");
 
+#ifdef __APPLE__
+	if (use_data_section)
+		printf("\t.section __DATA,.data\n");
+	else
+		printf("\t.section __RODATA,.rodata, \"a\"\n");
+#else
 	if (use_data_section)
 		printf("\t.section .data\n");
 	else
 		printf("\t.section .rodata, \"a\"\n");
+#endif
 
 	/* Provide proper symbols relocatability by their relativeness
 	 * to a fixed anchor point in the runtime image, either '_text'

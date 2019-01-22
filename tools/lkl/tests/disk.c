@@ -178,7 +178,7 @@ struct lkl_test tests[] = {
 
 int main(int argc, const char **argv)
 {
-	if (parse_args(argc, argv, args) < 0)
+	if (__parse_args(argc, argv, args) < 0)
 		return -1;
 
 	lkl_host_ops.print = lkl_test_log;

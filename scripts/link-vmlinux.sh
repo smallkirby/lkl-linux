@@ -55,11 +55,13 @@ info()
 #
 archive_builtin()
 {
-	info AR built-in.a
-	rm -f built-in.a;
-	${AR} rcsTP${KBUILD_ARFLAGS} built-in.a			\
-				${KBUILD_VMLINUX_INIT}		\
-				${KBUILD_VMLINUX_MAIN}
+	if [ "${LD_FMT}" != "mach-o-x86-64" ]; then
+		info AR built-in.a
+		rm -f built-in.a;
+		${AR} rcsTP${KBUILD_ARFLAGS} built-in.a			\
+		      ${KBUILD_VMLINUX_INIT}		\
+		      ${KBUILD_VMLINUX_MAIN}
+	fi
 }
 
 # Link of vmlinux.o used for section mismatch analysis
@@ -87,29 +89,52 @@ vmlinux_link()
 	local objects
 
 	if [ "${SRCARCH}" != "um" ]; then
-		objects="--whole-archive			\
-			built-in.a				\
-			--no-whole-archive			\
-			--start-group				\
-			${KBUILD_VMLINUX_LIBS}			\
-			--end-group				\
-			${1}"
+		if [ "${LD_FMT}" != "mach-o-x86-64" ]; then
+			objects="--whole-archive			\
+				built-in.a				\
+				--no-whole-archive			\
+				--start-group				\
+				${KBUILD_VMLINUX_LIBS}			\
+				--end-group				\
+				${1}"
 
-		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux} -o ${2}	\
-			-T ${lds} ${objects}
+			${LD} ${LDFLAGS} ${LDFLAGS_vmlinux} -o ${2}	\
+			      -T ${lds} ${objects}
+		else
+			objects="${KBUILD_VMLINUX_INIT}			\
+				${KBUILD_VMLINUX_MAIN}			\
+				${KBUILD_VMLINUX_LIBS}			\
+				${1}"
+
+			${LD} ${LDFLAGS} ${LDFLAGS_vmlinux} -o ${2}	\
+			      ${objects}
+		fi
+
 	else
-		objects="-Wl,--whole-archive			\
-			built-in.a				\
-			-Wl,--no-whole-archive			\
-			-Wl,--start-group			\
-			${KBUILD_VMLINUX_LIBS}			\
-			-Wl,--end-group				\
-			${1}"
+		if [ "${LD_FMT}" != "mach-o-x86-64" ]; then
+			objects="-Wl,--whole-archive			\
+				built-in.a				\
+				-Wl,--no-whole-archive			\
+				-Wl,--start-group			\
+				${KBUILD_VMLINUX_LIBS}			\
+				-Wl,--end-group				\
+				${1}"
 
-		${CC} ${CFLAGS_vmlinux} -o ${2}			\
-			-Wl,-T,${lds}				\
-			${objects}				\
-			-lutil -lrt -lpthread
+			${CC} ${CFLAGS_vmlinux} -o ${2}		\
+				-Wl,-T,${lds}				\
+				${objects}				\
+				-lutil -lrt -lpthread
+		else
+			objects="${KBUILD_VMLINUX_INIT}			\
+				${KBUILD_VMLINUX_MAIN}			\
+				${KBUILD_VMLINUX_LIBS}			\
+				${1}"
+
+			${CC} ${CFLAGS_vmlinux} -o ${2}		\
+				${objects}				\
+				-lutil -lrt -lpthread
+		fi
+
 		rm -f linux
 	fi
 }
