@@ -497,6 +497,32 @@ static int lkl_test_join(void)
 	}
 }
 
+static int lkl_test_vfork(void)
+{
+	int pid;
+
+	pid = lkl_sys_vfork();
+	if (pid < 0)
+	{
+		lkl_test_logf("cannot vfork\n");
+		return TEST_FAILURE;
+	}
+
+	if (pid == 0)
+	{
+		// child
+		lkl_test_logf("child\n");
+		lkl_sys_exit(0);
+	}
+	else
+	{
+		// parent
+		lkl_test_logf("parent pid=%d\n", pid);
+	}
+
+	return TEST_SUCCESS;
+}
+
 LKL_TEST_CALL(start_kernel, lkl_start_kernel, 0, &lkl_host_ops,
 	     "mem=16M loglevel=8");
 LKL_TEST_CALL(stop_kernel, lkl_sys_halt, 0);
@@ -545,6 +571,7 @@ struct lkl_test tests[] = {
 #ifndef __MINGW32__
 	LKL_TEST(many_syscall_threads),
 #endif
+	LKL_TEST(vfork),
 	LKL_TEST(stop_kernel),
 };
 

@@ -7,6 +7,7 @@
 #include <asm/types.h>
 #include <asm/processor.h>
 #include <asm/host_ops.h>
+#include <uapi/asm/sigcontext.h>
 
 typedef struct {
 	unsigned long seg;
@@ -29,6 +30,7 @@ struct thread_info {
 	lkl_thread_t tid;
 	struct rump_sysproxy_info rump;	/* for syscall proxy */
 	struct task_struct *prev_sched;
+	struct pt_regs regs;
 	unsigned long stackend;
 };
 

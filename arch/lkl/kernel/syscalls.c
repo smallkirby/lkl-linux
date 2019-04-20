@@ -102,6 +102,37 @@ static void del_host_task(void *arg)
 
 static struct lkl_tls_key *task_key;
 
+void inline lkl_save_register(struct task_struct *task)
+{
+	/* XXX: proper way ? */
+	/* alt: register unsigned long rbp asm("rbp"); rbp + 16 */
+	task_pt_regs(task)->regs.sp =
+		(unsigned long)(__builtin_frame_address(0) + 16);
+	task_pt_regs(task)->regs.bp =
+		(unsigned long)__builtin_frame_address(1);
+	task_pt_regs(task)->regs.ip =
+		(unsigned long)__builtin_return_address(0);
+
+#define SAVE_REG(r)						\
+	asm("mov %%"#r ",%0" :: "m"(task_pt_regs(task)->regs.r));
+
+	SAVE_REG(r15)
+	SAVE_REG(r14)
+	SAVE_REG(r13)
+	SAVE_REG(r12)
+	SAVE_REG(bx);
+}
+
+void lkl_set_host_task(struct task_struct *p)
+{
+	if (lkl_ops->tls_get) {
+		if (lkl_ops->tls_get(task_key)) {
+			pr_err("host task already there");
+		}
+		lkl_ops->tls_set(task_key, p);
+	}
+}
+
 long lkl_syscall(long no, long *params)
 {
 	struct task_struct *task = host0;
@@ -128,6 +159,9 @@ long lkl_syscall(long no, long *params)
 		lkl_cpu_put();
 
 	task_thread_info(task)->rump.count++;
+
+	if (no == __NR_vfork)
+		lkl_save_register(task);
 
 	ret = run_syscall(no, params);
 
