@@ -6,6 +6,8 @@
 #include <asm/cpu.h>
 #include <asm/sched.h>
 
+void lkl_set_host_task(struct task_struct *p);
+
 static int init_ti(struct thread_info *ti)
 {
 	ti->sched_sem = lkl_ops->sem_alloc(0);
@@ -49,6 +51,7 @@ void setup_thread_stack(struct task_struct *p, struct task_struct *org)
 	ti->flags = org_ti->flags;
 	ti->preempt_count = org_ti->preempt_count;
 	ti->addr_limit = org_ti->addr_limit;
+	memcpy(&ti->regs, &org_ti->regs, sizeof(ti->regs));
 }
 
 static void kill_thread(struct thread_info *ti)
@@ -145,6 +148,41 @@ struct thread_bootstrap_arg {
 	void *arg;
 };
 
+void inline lkl_restore_register(struct task_struct *task)
+{
+	void *newrsp;
+	unsigned long newrbp, stack_size;
+
+#define RESTORE_REG(r)				\
+	asm("mov %0, %%"#r :: "m"(task_pt_regs(task)->regs.r));
+
+	/* XXX: copy & restore sp, need to free... */
+	stack_size = STACK_TOP - 8 - task_pt_regs(task)->regs.sp;
+	stack_size = stack_size > 8192 ? 8192 : stack_size;
+	pr_info("regs.sp=%lx, ssize=%lu", task_pt_regs(task)->regs.sp, stack_size);
+	newrsp = kmalloc(stack_size, GFP_KERNEL);
+	memcpy(newrsp, (void *)task_pt_regs(task)->regs.sp, stack_size);
+	asm("mov %0, %%rsp" :: "m"(newrsp));
+
+	RESTORE_REG(r15);
+	RESTORE_REG(r14);
+	RESTORE_REG(r13);
+	RESTORE_REG(r12);
+	RESTORE_REG(bx);
+
+	/* rip, temporaly uses r10? */
+	asm("mov %0, %%r10" :: "m"(task_pt_regs(task)->regs.ip));
+
+	/* rbp */
+	newrbp = (unsigned long)newrsp
+		+ (task_pt_regs(task)->regs.bp - task_pt_regs(task)->regs.sp);
+	asm("mov %0, %%rbp" :: "m"(newrbp));
+
+	/* case for (v)fork: child should return 0 */
+	asm("mov $0, %rax");
+	asm("jmp *%r10");
+}
+
 static void thread_bootstrap(void *_tba)
 {
 	struct thread_bootstrap_arg *tba = (struct thread_bootstrap_arg *)_tba;
@@ -157,7 +195,16 @@ static void thread_bootstrap(void *_tba)
 	if (ti->prev_sched)
 		schedule_tail(ti->prev_sched);
 
-	f(arg);
+	/* kernel thread */
+	if (f) {
+		f(arg);
+	}
+	/* fork-ed process */
+	else {
+		lkl_cpu_put();
+		lkl_set_host_task(ti->task);
+		lkl_restore_register(ti->task);
+	}
 	do_exit(0);
 }
 

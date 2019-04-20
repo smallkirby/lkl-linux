@@ -46,11 +46,13 @@ struct thread_struct { };
 
 #define INIT_THREAD { }
 
-#define task_pt_regs(tsk) (struct pt_regs *)(NULL)
+#define task_pt_regs(tsk) ((struct pt_regs *)&((task_thread_info(tsk))->regs))
 
 /* We don't have strict user/kernel spaces */
 #define TASK_SIZE ((unsigned long)-1)
 #define TASK_UNMAPPED_BASE	0
+/* XXX: need for binfmt_elf */
+#define STACK_TOP      0x7ffffffff000 - PAGE_SIZE
 
 #define KSTK_EIP(tsk)	(0)
 #define KSTK_ESP(tsk)	(0)
