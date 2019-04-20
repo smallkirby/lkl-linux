@@ -42,6 +42,14 @@ static inline void trap_init(void)
 {
 }
 
+static inline void start_thread(struct pt_regs *regs, unsigned long pc,
+				unsigned long sp)
+{
+	asm("mov %0, %%rsp" :: "m"(sp));
+	asm("mov %0, %%rax" :: "m"(pc));
+	asm("jmp *%rax");
+}
+
 struct thread_struct { };
 
 #define INIT_THREAD { }

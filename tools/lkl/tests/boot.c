@@ -523,6 +523,84 @@ static int lkl_test_vfork(void)
 	return TEST_SUCCESS;
 }
 
+static int lkl_test_execve(void)
+{
+	int ret, disk_id, pid, status;
+	struct lkl_disk disk;
+	const char *disk_file = "disk-execve.img";
+	char mnt[32];
+	const char *path = "/hello";
+	const char *argv[] = {"hello", ".", NULL};
+
+	/* disk mount */
+	disk.fd = open(disk_file, O_RDWR);
+	if (disk.fd < 0) {
+		lkl_test_logf("cannot open %s\n", disk_file);
+		return TEST_FAILURE;
+	}
+
+	disk.ops = 0;
+	disk_id = lkl_disk_add(&disk);
+	if (disk_id < 0) {
+		lkl_test_logf("cannot lkl_disk_add\n");
+		return TEST_FAILURE;
+	}
+
+	ret = lkl_mount_dev(disk_id, 0, "ext4",
+			    LKL_MS_RDONLY, NULL, mnt, sizeof(mnt));
+	if (ret) {
+		lkl_test_logf("cannot lkl_mount_dev: %s\n", lkl_strerror(ret));
+		return TEST_FAILURE;
+	}
+
+	/* chroot */
+	lkl_test_logf("chrooting to %s\n", mnt);
+	ret = lkl_sys_chroot(mnt);
+	if (ret) {
+		lkl_test_logf("cannot lkl_sys_chroot: %s\n", lkl_strerror(ret));
+		return TEST_FAILURE;
+	}
+
+	ret = lkl_sys_chdir("/");
+	if (ret) {
+		lkl_test_logf("cannot lkl_sys_chdir: %s\n", lkl_strerror(ret));
+		return TEST_FAILURE;
+	}
+
+	/* vfork + execve */
+	pid = lkl_sys_vfork();
+	if (pid < 0) {
+		lkl_test_logf("cannot vfork\n");
+		return TEST_FAILURE;
+	}
+
+	if (pid == 0) {
+		// child
+		lkl_test_logf("child\n");
+		ret = lkl_sys_execve(path, argv, NULL);
+		lkl_test_logf("child ret %d\n", ret);
+		if (ret < 0)
+			lkl_test_logf("execve error: %s\n",
+				      lkl_strerror(ret));
+		lkl_sys_exit(0);
+	} else {
+		// parent
+		lkl_test_logf("parent pid=%d\n", pid);
+
+		/* XXX: since ld.so calls exit(main), this won't be called...  */
+		if ((ret =
+		     lkl_sys_waitid(LKL_P_PID, pid, NULL, WEXITED, NULL)) < 0) {
+			lkl_test_logf("wait error: %s\n",
+				      lkl_strerror(ret));
+			lkl_sys_exit(1);
+		}
+		lkl_printf("The child (pid=%d) existed with status(%d).\n",
+			   pid, WEXITSTATUS(status));
+	}
+
+	return TEST_SUCCESS;
+}
+
 LKL_TEST_CALL(start_kernel, lkl_start_kernel, 0, &lkl_host_ops,
 	     "mem=16M loglevel=8");
 LKL_TEST_CALL(stop_kernel, lkl_sys_halt, 0);
@@ -572,6 +650,9 @@ struct lkl_test tests[] = {
 	LKL_TEST(many_syscall_threads),
 #endif
 	LKL_TEST(vfork),
+	LKL_TEST(execve),
+	LKL_TEST(open_cwd),
+	LKL_TEST(getdents64),
 	LKL_TEST(stop_kernel),
 };
 

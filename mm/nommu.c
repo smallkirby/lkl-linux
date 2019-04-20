@@ -1646,6 +1646,13 @@ void exit_mmap(struct mm_struct *mm)
 	}
 }
 
+int vm_brk_flags(unsigned long addr, unsigned long request, unsigned long flags)
+{
+	/* XXX */
+	return 0;
+	return -ENOMEM;
+}
+
 int vm_brk(unsigned long addr, unsigned long len)
 {
 	return -ENOMEM;

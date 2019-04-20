@@ -122,6 +122,7 @@ typedef __s64			s64;
 #include <asm/socket.h>
 #include <linux/icmp.h>
 #include <linux/ip.h>
+#include <linux/wait.h>
 
 /* Define data structures used in system calls that are not defined in UAPI
  * headers */

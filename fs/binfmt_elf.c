@@ -100,6 +100,7 @@ static struct linux_binfmt elf_format = {
 
 #define BAD_ADDR(x) ((unsigned long)(x) >= TASK_SIZE)
 
+#ifdef CONFIG_MMU
 static int set_brk(unsigned long start, unsigned long end, int prot)
 {
 	start = ELF_PAGEALIGN(start);
@@ -118,6 +119,28 @@ static int set_brk(unsigned long start, unsigned long end, int prot)
 	current->mm->start_brk = current->mm->brk = end;
 	return 0;
 }
+#else
+static int set_brk(unsigned long start, unsigned long end, int prot)
+{
+	unsigned long stack_size = 131072UL; /* same as exec.c's default commit */
+
+	/* create a stack area and zero-size brk area */
+	stack_size = (stack_size + PAGE_SIZE - 1) & PAGE_MASK;
+	if (stack_size < PAGE_SIZE * 2)
+		stack_size = PAGE_SIZE * 2;
+
+	current->mm->start_brk = vm_mmap(NULL, 0, stack_size, prot,
+					 MAP_PRIVATE | MAP_ANONYMOUS |
+					 MAP_UNINITIALIZED | MAP_GROWSDOWN,
+					 0);
+	current->mm->brk = current->mm->start_brk;
+	current->mm->context.end_brk = current->mm->start_brk;
+	current->mm->start_stack = current->mm->start_brk + stack_size;
+	pr_info("sp=%lx\n", current->mm->start_stack);
+
+	return 0;
+}
+#endif
 
 /* We need to explicitly zero any fractional pages
    after the data section (i.e. bss).  This would
@@ -180,6 +203,10 @@ create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 	int ei_index = 0;
 	const struct cred *cred = current_cred();
 	struct vm_area_struct *vma;
+
+#ifndef CONFIG_MMU
+	p = current->mm->start_stack;
+#endif
 
 	/*
 	 * In some cases (e.g. Hyper-Threading), we want to avoid L1
@@ -310,8 +337,11 @@ create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 
 	/* Populate list of argv pointers back to argv strings. */
 	p = current->mm->arg_end = current->mm->arg_start;
+	pr_info("argc=%d", argc);
 	while (argc-- > 0) {
 		size_t len;
+		pr_info("argv[%d]=%s", bprm->argc-argc-1, (char *)p);
+		pr_info("");
 		if (__put_user((elf_addr_t)p, sp++))
 			return -EFAULT;
 		len = strnlen_user((void __user *)p, MAX_ARG_STRLEN);
@@ -374,8 +404,19 @@ static unsigned long elf_map(struct file *filep, unsigned long addr,
 		map_addr = vm_mmap(filep, addr, total_size, prot, type, off);
 		if (!BAD_ADDR(map_addr))
 			vm_munmap(map_addr+size, total_size-size);
-	} else
+
+		/* XXX: _GLOBAL_OFFSET_TABLE_ & _DYNAMIC */
+		memcpy((char *)map_addr + eppnt->p_align, (char *)map_addr, size);
+	} else {
 		map_addr = vm_mmap(filep, addr, size, prot, type, off);
+		/* XXX2: for rtld_global etc too... */
+		memcpy((char *)addr, (char *)map_addr, size);
+	}
+
+	pr_info("mmap(%s)[%lx] <file> total_sz=%lx sz=%lx pr=%x fl=%x of=%lx --> %016lx-%016lx",
+		filep->f_path.dentry->d_name.name,
+		addr, total_size, size, prot, type,
+		off, map_addr, map_addr + (total_size ?: size));
 
 	if ((type & MAP_FIXED_NOREPLACE) &&
 	    PTR_ERR((void *)map_addr) == -EEXIST)
@@ -671,6 +712,7 @@ out:
 #define STACK_RND_MASK (0x7ff >> (PAGE_SHIFT - 12))	/* 8MB of VA */
 #endif
 
+#ifdef CONFIG_MMU
 static unsigned long randomize_stack_top(unsigned long stack_top)
 {
 	unsigned long random_variable = 0;
@@ -686,6 +728,7 @@ static unsigned long randomize_stack_top(unsigned long stack_top)
 	return PAGE_ALIGN(stack_top) - random_variable;
 #endif
 }
+#endif
 
 static int load_elf_binary(struct linux_binprm *bprm)
 {
@@ -884,12 +927,14 @@ static int load_elf_binary(struct linux_binprm *bprm)
 
 	/* Do this so that we can load the interpreter, if need be.  We will
 	   change some of these later */
+#ifdef CONFIG_MMU
 	retval = setup_arg_pages(bprm, randomize_stack_top(STACK_TOP),
 				 executable_stack);
 	if (retval < 0)
 		goto out_free_dentry;
 	
 	current->mm->start_stack = bprm->p;
+#endif
 
 	/* Now we do a little grungy work by mmapping the ELF image into
 	   the correct location in memory. */
@@ -1125,6 +1170,16 @@ static int load_elf_binary(struct linux_binprm *bprm)
 		goto out;
 #endif /* ARCH_HAS_SETUP_ADDITIONAL_PAGES */
 
+#ifndef CONFIG_MMU
+	/* copy the arg pages onto the stack */
+	retval = transfer_args_to_stack(bprm, &current->mm->start_stack);
+	if (retval < 0)
+		goto out_free_dentry;
+
+	current->mm->arg_start = current->mm->start_stack;
+	bprm->p = current->mm->start_stack - bprm->p;
+#endif
+
 	retval = create_elf_tables(bprm, &loc->elf_ex,
 			  load_addr, interp_load_addr);
 	if (retval < 0)
@@ -1134,7 +1189,9 @@ static int load_elf_binary(struct linux_binprm *bprm)
 	current->mm->start_code = start_code;
 	current->mm->start_data = start_data;
 	current->mm->end_data = end_data;
+#ifdef CONFIG_MMU
 	current->mm->start_stack = bprm->p;
+#endif
 
 	if ((current->flags & PF_RANDOMIZE) && (randomize_va_space > 1)) {
 		current->mm->brk = current->mm->start_brk =

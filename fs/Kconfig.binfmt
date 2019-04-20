@@ -3,7 +3,6 @@ menu "Executable file formats"
 
 config BINFMT_ELF
 	bool "Kernel support for ELF binaries"
-	depends on MMU
 	select ELFCORE
 	default y
 	---help---

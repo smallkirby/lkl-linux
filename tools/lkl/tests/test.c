@@ -104,8 +104,9 @@ int lkl_test_run(const struct lkl_test *tests, int nr, const char *fmt, ...)
 
 void lkl_test_log(const char *str, int len)
 {
-	while (len--)
-		log_char(*(str++));
+	write(1, str, len);
+//	while (len--)
+//		log_char(*(str++));
 }
 
 int lkl_test_logf(const char *fmt, ...)
