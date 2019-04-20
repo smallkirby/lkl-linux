@@ -1022,7 +1022,7 @@ int ptrace_request(struct task_struct *child, long request,
 		ret = ptrace_detach(child, data);
 		break;
 
-#ifdef CONFIG_BINFMT_ELF_FDPIC
+#ifndef CONFIG_BINFMT_ELF_FDPIC
 	case PTRACE_GETFDPIC: {
 		struct mm_struct *mm = get_task_mm(child);
 		unsigned long tmp = 0;

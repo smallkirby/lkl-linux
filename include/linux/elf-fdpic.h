@@ -18,9 +18,9 @@
  * binfmt binary parameters structure
  */
 struct elf_fdpic_params {
-	struct elfhdr			hdr;		/* ref copy of ELF header */
-	struct elf_phdr			*phdrs;		/* ref copy of PT_PHDR table */
-	struct elf32_fdpic_loadmap	*loadmap;	/* loadmap to be passed to userspace */
+	struct elf64_hdr			hdr;		/* ref copy of ELF header */
+	struct elf64_phdr			*phdrs;		/* ref copy of PT_PHDR table */
+	struct elf64_fdpic_loadmap	*loadmap;	/* loadmap to be passed to userspace */
 	unsigned long			elfhdr_addr;	/* mapped ELF header user address */
 	unsigned long			ph_addr;	/* mapped PT_PHDR user address */
 	unsigned long			map_addr;	/* mapped loadmap user address */

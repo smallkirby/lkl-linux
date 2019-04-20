@@ -30,6 +30,18 @@ struct elf32_fdpic_loadmap {
 	struct elf32_fdpic_loadseg segs[];
 };
 
+struct elf64_fdpic_loadseg {
+	Elf64_Addr	addr;		/* core address to which mapped */
+	Elf64_Addr	p_vaddr;	/* VMA recorded in file */
+	Elf64_Xword	p_memsz;	/* allocation size recorded in file */
+};
+
+struct elf64_fdpic_loadmap {
+	Elf64_Half	version;	/* version of these structures, just in case... */
+	Elf64_Half	nsegs;		/* number of segments */
+	struct elf64_fdpic_loadseg segs[];
+};
+
 #define ELF32_FDPIC_LOADMAP_VERSION	0x0000
 
 #endif /* _UAPI_LINUX_ELF_FDPIC_H */
