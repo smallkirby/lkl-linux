@@ -34,6 +34,7 @@
 #include <linux/personality.h>
 #include <linux/ptrace.h>
 #include <linux/init.h>
+#include <linux/random.h>
 #include <linux/elf.h>
 #include <linux/elf-fdpic.h>
 #include <linux/elfcore.h>
@@ -46,7 +47,7 @@
 
 typedef char *elf_caddr_t;
 
-#if 0
+#if 1
 #define kdebug(fmt, ...) printk("FDPIC "fmt"\n" ,##__VA_ARGS__ )
 #else
 #define kdebug(fmt, ...) do {} while(0)
@@ -123,7 +124,7 @@ static int is_elf(struct elfhdr *hdr, struct file *file)
 #endif
 
 #ifndef elf_check_const_displacement
-#define elf_check_const_displacement(x) 0
+#define elf_check_const_displacement(x) 1
 #endif
 
 static int is_constdisp(struct elfhdr *hdr)
@@ -509,9 +510,10 @@ static int create_elf_fdpic_tables(struct linux_binprm *bprm,
 	elf_caddr_t __user *argv, *envp;
 	size_t platform_len = 0, len;
 	char *k_platform, *k_base_platform;
-	char __user *u_platform, *u_base_platform, *p;
+	char __user *u_platform, *u_base_platform, *p, *u_rand_bytes;
 	int loop;
 	int nr;	/* reset for each csp adjustment */
+	unsigned char k_rand_bytes[16];
 
 #ifdef CONFIG_MMU
 	/* In some cases (e.g. Hyper-Threading), we want to avoid L1 evictions
@@ -560,6 +562,16 @@ static int create_elf_fdpic_tables(struct linux_binprm *bprm,
 		if (__copy_to_user(u_base_platform, k_base_platform, platform_len) != 0)
 			return -EFAULT;
 	}
+
+	/* from binfmt_elf.c */
+	/*
+	 * Generate 16 random bytes for userspace PRNG seeding.
+	 */
+	get_random_bytes(k_rand_bytes, sizeof(k_rand_bytes));
+	sp -= sizeof(k_rand_bytes);
+	u_rand_bytes = (char __user *) sp;
+	if (__copy_to_user(u_rand_bytes, k_rand_bytes, sizeof(k_rand_bytes)))
+		return -EFAULT;
 
 	sp &= ~7UL;
 
@@ -660,6 +672,7 @@ static int create_elf_fdpic_tables(struct linux_binprm *bprm,
 	NEW_AUX_ENT(AT_EGID,	(elf_addr_t) from_kgid_munged(cred->user_ns, cred->egid));
 	NEW_AUX_ENT(AT_SECURE,	bprm->secureexec);
 	NEW_AUX_ENT(AT_EXECFN,	bprm->exec);
+	NEW_AUX_ENT(AT_RANDOM, (elf_addr_t)(unsigned long)u_rand_bytes);
 
 #ifdef ARCH_DLINFO
 	nr = 0;
@@ -749,8 +762,7 @@ static int elf_fdpic_map_file(struct elf_fdpic_params *params,
 	/* allocate a load map table */
 	nloads = 0;
 	for (loop = 0; loop < params->hdr.e_phnum; loop++)
-		if (params->phdrs[loop].p_type == PT_LOAD ||
-		    params->phdrs[loop].p_type == PT_DYNAMIC)
+		if (params->phdrs[loop].p_type == PT_LOAD)
 			nloads++;
 
 	if (nloads == 0)
@@ -806,7 +818,7 @@ static int elf_fdpic_map_file(struct elf_fdpic_params *params,
 	phdr = params->phdrs;
 
 	for (loop = 0; loop < params->hdr.e_phnum; loop++, phdr++) {
-		if (phdr->p_type != PT_LOAD && phdr->p_type != PT_DYNAMIC)
+		if (phdr->p_type != PT_LOAD)
 			continue;
 
 		if (phdr->p_offset > params->hdr.e_phoff ||
@@ -1028,7 +1040,7 @@ static int elf_fdpic_map_file_by_direct_mmap(struct elf_fdpic_params *params,
 		unsigned long maddr, disp, excess, excess1;
 		int prot = 0, flags;
 
-		if (phdr->p_type != PT_LOAD && phdr->p_type != PT_DYNAMIC)
+		if (phdr->p_type != PT_LOAD)
 			continue;
 
 		kdebug("[LOAD] va=%lx of=%lx fs=%lx ms=%lx",
@@ -1095,9 +1107,6 @@ static int elf_fdpic_map_file_by_direct_mmap(struct elf_fdpic_params *params,
 
 		if (IS_ERR_VALUE(maddr))
 			return (int) maddr;
-
-		/* XXX: _GLOBAL_OFFSET_TABLE_ & _DYNAMIC */
-		memcpy((char *)maddr + phdr->p_align, (char *)maddr, phdr->p_memsz);
 
 		if ((params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) ==
 		    ELF_FDPIC_FLAG_CONTIGUOUS)

@@ -23,6 +23,7 @@ ifneq ($(LKL_HOST_CONFIG_RUMP),y)
 progs-y += tests/boot
 progs-y += tests/disk
 progs-y += tests/net-test
+progs-y += tests/hello
 endif
 
 
