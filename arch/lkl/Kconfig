@@ -44,7 +44,7 @@ config LKL
        select HAVE_UNDERSCORE_SYMBOL_PREFIX if "$(OUTPUT_FORMAT)" = "mach-o-x86-64"
        select FUTEX
        select FILE_LOCKING
-       select BINFMT_ELF
+       select BINFMT_ELF_FDPIC
 
 config OUTPUT_FORMAT
        string "Output format"
