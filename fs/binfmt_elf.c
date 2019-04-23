@@ -289,7 +289,7 @@ create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 #ifdef ELF_HWCAP2
 	NEW_AUX_ENT(AT_HWCAP2, ELF_HWCAP2);
 #endif
-	NEW_AUX_ENT(AT_EXECFN, bprm->exec);
+//	NEW_AUX_ENT(AT_EXECFN, bprm->exec);
 	if (k_platform) {
 		NEW_AUX_ENT(AT_PLATFORM,
 			    (elf_addr_t)(unsigned long)u_platform);
@@ -406,11 +406,12 @@ static unsigned long elf_map(struct file *filep, unsigned long addr,
 			vm_munmap(map_addr+size, total_size-size);
 
 		/* XXX: _GLOBAL_OFFSET_TABLE_ & _DYNAMIC */
-		memcpy((char *)map_addr + eppnt->p_align, (char *)map_addr, size);
+//		memcpy((char *)map_addr + eppnt->p_align, (char *)map_addr, size);
+
 	} else {
 		map_addr = vm_mmap(filep, addr, size, prot, type, off);
 		/* XXX2: for rtld_global etc too... */
-		memcpy((char *)addr, (char *)map_addr, size);
+//		memcpy((char *)addr, (char *)map_addr, size);
 	}
 
 	pr_info("mmap(%s)[%lx] <file> total_sz=%lx sz=%lx pr=%x fl=%x of=%lx --> %016lx-%016lx",

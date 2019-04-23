@@ -1648,9 +1648,9 @@ void exit_mmap(struct mm_struct *mm)
 
 int vm_brk_flags(unsigned long addr, unsigned long request, unsigned long flags)
 {
-	/* XXX */
+	/* XXX: padzero only zero-ed first 2320 bytes but musl-ldso needs more */
+	memset((char *)addr, 0, request);
 	return 0;
-	return -ENOMEM;
 }
 
 int vm_brk(unsigned long addr, unsigned long len)
