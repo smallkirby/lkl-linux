@@ -129,10 +129,10 @@ static ssize_t lkl_file_read(struct file *fp, char __user *buf, size_t size,
 	iov.iov_len = size;
 
 	err = rumpuser_iovread((int)fp->private_data, &iov, 1, 0, &ret);
-	if (err)
-		return -ret;
+	if (err == 0)
+		return ret;
 
-	return 0;
+	return -err;
 }
 
 static int lkl_file_open(struct inode *inode, struct file *file)
