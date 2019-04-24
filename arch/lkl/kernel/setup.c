@@ -153,7 +153,7 @@ static int lkl_run_init(struct linux_binprm *bprm)
 	int ret;
 
 	if (strcmp("/init", bprm->filename) != 0)
-		return -EINVAL;
+		return -ENOEXEC;
 
 	ret = flush_old_exec(bprm);
 	if (ret)
