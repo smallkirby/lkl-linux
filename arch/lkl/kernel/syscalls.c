@@ -133,10 +133,20 @@ void lkl_set_host_task(struct task_struct *p)
 	}
 }
 
+
+long (*lkl_parent_syscall)(long no, long *params);
+
 long lkl_syscall(long no, long *params)
 {
 	struct task_struct *task = host0;
 	long ret;
+
+	/* use parent proc's lkl_syscall instead */
+	if (lkl_parent_syscall)
+		return lkl_parent_syscall(no, params);
+
+	if (!lkl_ops)
+		return -ENOSYS;
 
 	ret = lkl_cpu_get();
 	if (ret < 0)

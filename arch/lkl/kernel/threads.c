@@ -160,7 +160,7 @@ void inline lkl_restore_register(struct task_struct *task)
 
 	/* XXX: copy & restore sp, need to free... */
 	stack_size = STACK_TOP - 8 - task_pt_regs(task)->regs.sp;
-	stack_size = stack_size > 8192 ? 8192 : stack_size;
+	stack_size = stack_size > 4096 ? 4096 : stack_size;
 	pr_info("regs.sp=%lx, ssize=%lu", task_pt_regs(task)->regs.sp, stack_size);
 	newrsp = kmalloc(stack_size, GFP_KERNEL);
 	memcpy(newrsp, (void *)task_pt_regs(task)->regs.sp, stack_size);
@@ -170,7 +170,7 @@ void inline lkl_restore_register(struct task_struct *task)
 	RESTORE_REG(r14);
 	RESTORE_REG(r13);
 	RESTORE_REG(r12);
-	RESTORE_REG(bx);
+//	RESTORE_REG(bx);
 
 	/* rip, temporaly uses r10? */
 	asm("mov %0, %%r10" :: "m"(task_pt_regs(task)->regs.ip));

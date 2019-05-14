@@ -1,6 +1,8 @@
 #ifndef _ASM_LKL_ELF_H
 #define _ASM_LKL_ELF_H
 
+#include <asm/auxvec.h>
+
 #define elf_check_arch(x) \
 	((x)->e_machine == EM_X86_64)
 
@@ -21,5 +23,10 @@
 
 #define elf_gregset_t long
 #define elf_fpregset_t double
+
+long lkl_syscall(long no, long *params);
+#define ARCH_DLINFO						\
+	NEW_AUX_ENT(AT_PARENT_SYSCALL, (unsigned long)lkl_syscall);
+
 #endif
 
