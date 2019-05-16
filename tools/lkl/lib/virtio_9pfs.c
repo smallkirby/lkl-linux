@@ -25,6 +25,7 @@ static int fs9p_check_features(struct virtio_dev *dev)
 static int fs9p_enqueue(struct virtio_dev *dev, int q, struct virtio_req *req)
 {
 	struct virtio_9p_dev *fs9p_dev;
+	int ret = 0;
 
 	if (req->buf_count < 2) {
 		lkl_printf("virtio_9pfs: no incoming buf\n");
@@ -32,10 +33,10 @@ static int fs9p_enqueue(struct virtio_dev *dev, int q, struct virtio_req *req)
 	}
 
 	fs9p_dev = container_of(dev, struct virtio_9p_dev, dev);
-	fs9p_dev->ops->request(fs9p_dev->fs, req->buf, req->buf_count);
+	ret = fs9p_dev->ops->request(fs9p_dev->fs, req->buf, req->buf_count);
 
 out:
-	virtio_req_complete(req, 0);
+	virtio_req_complete(req, ret);
 	return 0;
 }
 

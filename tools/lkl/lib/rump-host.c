@@ -816,8 +816,8 @@ static int fs_request(struct lkl_9pfs fs, struct iovec *iov, int cnt)
 
 	err = write(fs.fd, iov[0].iov_base, iov[0].iov_len);
 	if (err < 0) {
-		lkl_printf("rumpfd 9pfs: failed to write to fd %d\n", fs.fd);
-		return -1;
+		lkl_printf("rumpfd 9pfs: failed to write to fd %d, err=%d\n", fs.fd, errno);
+		return LKL_DEV_BLK_STATUS_IOERR;
 	}
 
 	err = readv(fs.fd, &iov[1], cnt - 1);
@@ -826,7 +826,7 @@ static int fs_request(struct lkl_9pfs fs, struct iovec *iov, int cnt)
 		return LKL_DEV_BLK_STATUS_IOERR;
 	}
 
-	return LKL_DEV_BLK_STATUS_OK;
+	return err;
 }
 
 struct lkl_dev_9pfs_ops lkl_dev_9pfs_ops = {
