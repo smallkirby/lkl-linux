@@ -159,8 +159,9 @@ void inline lkl_restore_register(struct task_struct *task)
 	asm("mov %0, %%"#r :: "m"(task_pt_regs(task)->regs.r));
 
 	/* XXX: copy & restore sp, need to free... */
+#define FORK_STACK_SIZE 1200
 	stack_size = STACK_TOP - 8 - task_pt_regs(task)->regs.sp;
-	stack_size = stack_size > 4096 ? 4096 : stack_size;
+	stack_size = stack_size > FORK_STACK_SIZE ? FORK_STACK_SIZE : stack_size;
 	pr_info("regs.sp=%lx, ssize=%lu", task_pt_regs(task)->regs.sp, stack_size);
 	newrsp = kmalloc(stack_size, GFP_KERNEL);
 	memcpy(newrsp, (void *)task_pt_regs(task)->regs.sp, stack_size);
