@@ -37,6 +37,7 @@ define macos_host
   KBUILD_CLANG_CFLAGS += -Wno-gnu-variable-sized-type-not-at-end
   KBUILD_CLANG_CFLAGS += -Wno-uninitialized -Wno-sometimes-uninitialized
   KBUILD_CLANG_CFLAGS += -Wno-address-of-packed-member -Wno-unused-value
+  KBUILD_CLANG_CFLAGS += -Wno-return-stack-address
   export KBUILD_CLANG_CFLAGS
 
   CFLAGS += $$(KBUILD_CLANG_CFLAGS)
