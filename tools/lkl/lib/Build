@@ -37,3 +37,5 @@ CFLAGS_rump-host.o = -I$(RUMP_PREFIX)/../platform/include \
 		   -DLKL_HOST_CONFIG_POSIX -DCONFIG_LKL
 
 CFLAGS_rump-sysproxy.o += -I$(OUTPUT)/../../include
+CFLAGS_config.o =  -I$(RUMP_PREFIX)/../platform/include \
+		   -I$(RUMP_PREFIX)/../franken/include

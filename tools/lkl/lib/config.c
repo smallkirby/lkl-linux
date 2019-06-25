@@ -1,10 +1,17 @@
 #include <stdlib.h>
 #define _HAVE_STRING_ARCH_strtok_r
 #include <string.h>
+#include <time.h>
 #include <lkl_host.h>
 #include <lkl_config.h>
 
 #include "../../perf/pmu-events/jsmn.h"
+
+/* XXX: missing in {franken,platform}/include */
+char *strtok (char *__restrict, const char *__restrict);
+char *strtok_r (char *__restrict, const char *__restrict, char **__restrict);
+long strtol (const char *__restrict, char **__restrict, int);
+unsigned long strtoul (const char *__restrict, char **__restrict, int);
 
 static int jsoneq(const char *json, jsmntok_t *tok, const char *s)
 {
