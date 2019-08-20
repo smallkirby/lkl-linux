@@ -1025,3 +1025,11 @@ void rump_exit(void)
 
 	rumpuser_exit(0);
 }
+
+void rump_platform_exit(void)
+{
+	if (verbose)
+		rumpuser_dprintf("rumpuser finishing.\n");
+
+	_exit(0);
+}

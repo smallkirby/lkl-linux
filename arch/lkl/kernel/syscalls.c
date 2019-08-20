@@ -173,6 +173,12 @@ long lkl_syscall(long no, long *params)
 	if (no == __NR_vfork)
 		lkl_save_register(task);
 
+#ifdef RUMPUSER
+	void rump_platform_exit(void);
+	if (no == __NR_exit || no == __NR_exit_group)
+		rump_platform_exit();
+#endif
+
 	ret = run_syscall(no, params);
 
 	/* rentrant syscall */
