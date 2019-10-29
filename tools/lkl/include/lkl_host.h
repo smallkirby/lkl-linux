@@ -20,7 +20,7 @@ int lkl_printf(const char *fmt, ...);
 extern char lkl_virtio_devs[4096];
 
 #if defined (LKL_HOST_CONFIG_POSIX) || \
-	(defined (LKL_HOST_CONFIG_RUMP) && !defined (__ARMEL__))
+	(defined (LKL_HOST_CONFIG_RUMP) && (__ARM_ARCH != 4))
 #include <sys/uio.h>
 #else
 struct iovec {

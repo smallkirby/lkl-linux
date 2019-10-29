@@ -11,8 +11,10 @@
 
 #ifdef CONFIG_64BIT
 #define ELF_CLASS ELFCLASS64
+#define elf_fdpic_loadmap	elf32_fdpic_loadmap
 #else
 #define ELF_CLASS ELFCLASS32
+#define elf_fdpic_loadmap	elf64_fdpic_loadmap
 #endif
 
 #define ELF_EXEC_PAGESIZE	PAGE_SIZE

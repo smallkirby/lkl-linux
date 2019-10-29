@@ -19,5 +19,9 @@
 /* XXX: busybox uses syscall(2) with x86_64 syscall number so,
  * temporary use this */
 #undef __NR_clock_gettime
+#ifdef __x86_64
 #define __NR_clock_gettime			228
+#elif __arm__		/* arm32 */
+#define __NR_clock_gettime			263
+#endif
 __SC_COMP(__NR_clock_gettime, sys_clock_gettime, compat_sys_clock_gettime)

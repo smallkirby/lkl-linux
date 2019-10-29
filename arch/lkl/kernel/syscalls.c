@@ -104,6 +104,7 @@ static struct lkl_tls_key *task_key;
 
 void inline lkl_save_register(struct task_struct *task)
 {
+#ifdef __x86_64
 	/* XXX: proper way ? */
 	/* alt: register unsigned long rbp asm("rbp"); rbp + 16 */
 	task_pt_regs(task)->regs.sp =
@@ -121,6 +122,7 @@ void inline lkl_save_register(struct task_struct *task)
 	SAVE_REG(r13)
 	SAVE_REG(r12)
 	SAVE_REG(bx);
+#endif /* __x86_64 */
 }
 
 void lkl_set_host_task(struct task_struct *p)

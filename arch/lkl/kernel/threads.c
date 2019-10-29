@@ -152,6 +152,7 @@ struct thread_bootstrap_arg {
 
 void inline lkl_restore_register(struct task_struct *task)
 {
+#ifdef __x86_64
 	void *newrsp;
 	unsigned long newrbp, stack_size;
 
@@ -184,6 +185,7 @@ void inline lkl_restore_register(struct task_struct *task)
 	/* case for (v)fork: child should return 0 */
 	asm("mov $0, %rax");
 	asm("jmp *%r10");
+#endif /* __x86_64 */
 }
 
 static void thread_bootstrap(void *_tba)
