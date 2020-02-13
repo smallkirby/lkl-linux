@@ -102,7 +102,7 @@ static void del_host_task(void *arg)
 
 static struct lkl_tls_key *task_key;
 
-void inline lkl_save_register(struct task_struct *task)
+int inline lkl_save_register(struct task_struct *task)
 {
 #ifdef __x86_64
 	/* XXX: proper way ? */
@@ -122,6 +122,10 @@ void inline lkl_save_register(struct task_struct *task)
 	SAVE_REG(r13)
 	SAVE_REG(r12)
 	SAVE_REG(bx);
+
+	return 0;
+#else
+	return -ENOSYS;
 #endif /* __x86_64 */
 }
 
@@ -172,8 +176,11 @@ long lkl_syscall(long no, long *params)
 
 	task_thread_info(task)->rump.count++;
 
-	if (no == __NR_vfork)
-		lkl_save_register(task);
+	if (no == __NR_vfork) {
+		ret = lkl_save_register(task);
+		if (ret < 0)
+			return ret;
+	}
 
 #ifdef RUMPUSER
 	void rump_platform_exit(void);
