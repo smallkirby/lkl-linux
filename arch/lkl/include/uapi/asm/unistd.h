@@ -21,7 +21,9 @@
 #undef __NR_clock_gettime
 #ifdef __x86_64
 #define __NR_clock_gettime			228
-#elif __arm__		/* arm32 */
+#elif defined(__arm__)		/* arm32 */
 #define __NR_clock_gettime			263
+#elif defined(__aarch64__)   /* aarch64 */
+#define __NR_clock_gettime			113
 #endif
 __SC_COMP(__NR_clock_gettime, sys_clock_gettime, compat_sys_clock_gettime)
