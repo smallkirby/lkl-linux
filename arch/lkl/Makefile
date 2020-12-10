@@ -48,7 +48,8 @@ KBUILD_CFLAGS += -I$(RUMP_INCLUDE) -DRUMPUSER -DLIBRUMPUSER -D_KERNEL
 
 # objcopy trick is taken from rumpkernel
 GCCSYMBOLS=__umoddi3|__udivdi3|__aeabi_idiv|__aeabi_idivmod|__aeabi_llsl
-GCCSYMBOLS:=$(GCCSYMBOLS)|__aeabi_llsr|__aeabi_uidiv|__aeabi_uidivmod|__aeabi_uldivmod
+GCCSYMBOLS:=$(GCCSYMBOLS)|__aeabi_llsr|__aeabi_lasr
+GCCSYMBOLS:=$(GCCSYMBOLS)|__aeabi_uidiv|__aeabi_uidivmod|__aeabi_uldivmod
 GCCATOMIC=__sync_synchronize|__sync_fetch_and_sub_4|__sync_fetch_and_add_4
 GCCATOMIC:=$(GCCATOMIC)|__sync_fetch_and_and_4|__sync_fetch_and_or_4
 VMLINUX_SYMS=__start___ex_table|__stop___ex_table|boot_cmdline
